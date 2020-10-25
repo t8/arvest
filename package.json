@@ -11,7 +11,9 @@
     "start": "tsc index.ts --outDir dist && node dist/index.js"
   },
   "dependencies": {
-    "arweave": "^1.9.1"
+    "arweave": "^1.9.1",
+    "community-js": "^1.1.2",
+    "dayjs": "^1.9.4"
   },
   "devDependencies": {
     "@types/node": "^14.14.2",
