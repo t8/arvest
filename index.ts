@@ -12,7 +12,7 @@ export interface config {
 }
 
 // const keyfile = JSON.parse(process.env.KEYFILE);
-const keyfile: JWKInterface = JSON.parse(process.env.KEYFILE);
+const keyfile: JWKInterface = {kty: "", e: "", n: ""};
 
 function totalVestingDays(): number {
   const now = dayjs();
@@ -29,10 +29,10 @@ function tokensReleased(): number {
 }
 
 function generateBlockHeights(): number[] {
-  let blockHeights = [];
-  for (let i = 0; i < totalVestingBlocks() / 30; i++) {
-    if (i = 0) {
-      blockHeights[i] = 30;
+  let blockHeights = new Array(totalVestingBlocks() / 30);
+  for (let i = 0; i < blockHeights.length; i++) {
+    if (i === 0) {
+      blockHeights[i] = 0;
     } else {
       blockHeights[i] = blockHeights[i - 1] + 30;
     }
@@ -60,6 +60,4 @@ async function generateTransactions(blockHeights: number[]): Promise<Transaction
   return transactions;
 }
 
-console.log(totalVestingDays());
-console.log(totalVestingBlocks());
-console.log(tokensReleased());
+generateBlockHeights();
