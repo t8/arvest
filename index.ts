@@ -8,10 +8,22 @@ export interface config {
   vest_period: number;
 }
 
-const keyfile = JSON.parse(process.env.KEYFILE);
+// const keyfile = JSON.parse(process.env.KEYFILE);
 
-function totalVestingDays() {
+function totalVestingDays(): number {
   const now = dayjs();
-  const then = now.add(2, "year");
-  return then.diff(then, "day");
+  const then = now.add(config.vest_period, "year");
+  return then.diff(now, "day");
 }
+
+function totalVestingBlocks(): number {
+  return totalVestingDays() * 30;
+}
+
+function tokensReleased(): number {
+  return Math.round(config.tokens_to_vest / totalVestingDays());
+}
+
+console.log(totalVestingDays());
+console.log(totalVestingBlocks());
+console.log(tokensReleased());
