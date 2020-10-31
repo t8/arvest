@@ -3,6 +3,8 @@
 
 ## Use it
 
+> **Important note**: This project is largely a WIP - Use at your own risk!
+
 1. 🍴 Fork this repository
 2. 📝 Edit the `config.ts` file accordingly
 3. 🖥️  Run `yarn` and then `yarn start`
