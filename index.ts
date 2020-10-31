@@ -62,12 +62,12 @@ function generateBlockHeights(): number[] {
 }
 
 /**
- * Generates Arweave transactions for each scheduled release
+ * Generates Arweave transactions for proposing each scheduled release
  * @param blockHeights block heights release schedule
  * 
  * @returns An array of Arweave transactions
  */
-async function generateTransactions(blockHeights: number[]): Promise<Transaction[]> {
+async function generateVoteProposals(blockHeights: number[]): Promise<Transaction[]> {
   const client: Arweave = Arweave.init({
     host: 'arweave.net',
     port: 443,
@@ -81,6 +81,7 @@ async function generateTransactions(blockHeights: number[]): Promise<Transaction
   for (let i = 0; i < blockHeights.length; i++) {
     let tags = {
       "Application": "arVest",
+      "Action": "Propose",
       "App-Name": "SmartWeaveAction",
       "App-Version": "0.3.0",
       "Contract": config.pst_contract_id,
@@ -107,6 +108,53 @@ async function generateTransactions(blockHeights: number[]): Promise<Transaction
     await client.transactions.sign(transactions[i], keyfile);
   }
 
+  return transactions;
+}
+
+/**
+ * Generates Arweave transactions for voting on each proposal
+ * @param startingVoteIndex The starting vote ID
+ * 
+ * @returns An array of Arweave transactions
+ */
+async function generateVotes(startingVoteIndex: number): Promise<Transaction[]> {
+  const client: Arweave = Arweave.init({
+    host: 'arweave.net',
+    port: 443,
+    protocol: 'https',
+    timeout: 20000,
+    logging: false,
+  });
+
+  let transactions: Transaction[] = [];
+  const endingVoteIndex: number = startingVoteIndex + (totalVestingBlocks() / 30);
+  
+  for (let i = startingVoteIndex; i < endingVoteIndex; i++) {
+    let tags = {
+      "Application": "arVest",
+      "Action": "Vote",
+      "App-Name": "SmartWeaveAction",
+      "App-Version": "0.3.0",
+      "Contract": config.pst_contract_id,
+      "Input": JSON.stringify({
+        "function": "vote",
+        "id": i,
+        "cast": "yay"
+      }),
+    };
+
+    // Generate the transaction
+    transactions[i] = await client.createTransaction({
+      data: Math.random().toString().slice(-4)
+    }, keyfile);
+
+    // Add the tags
+    for (const [key, value] of Object.entries(tags)) {
+      transactions[i].addTag(key, value.toString());
+    }
+
+    await client.transactions.sign(transactions[i], keyfile);
+  }
   return transactions;
 }
 
