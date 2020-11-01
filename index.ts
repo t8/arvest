@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import Arweave from 'arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
+require('dotenv').config();
 dayjs().format();
 
 export interface config {
@@ -12,8 +13,8 @@ export interface config {
   recipient: string;
 }
 
-// const keyfile = JSON.parse(process.env.KEYFILE);
-const keyfile: JWKInterface = {kty: "", e: "", n: ""};
+const keyfile: JWKInterface = JSON.parse(process.env.KEYFILE);
+// const keyfile: JWKInterface = {kty: "", e: "", n: ""};
 
 /**
  * The total number of days for tokens to be locked
@@ -79,6 +80,7 @@ async function generateVoteProposals(blockHeights: number[]): Promise<Transactio
   let transactions: Transaction[] = [];
 
   for (let i = 0; i < blockHeights.length; i++) {
+    console.log("Proposal: " + i);
     let tags = {
       "Application": "arVest",
       "Action": "Propose",
@@ -175,6 +177,7 @@ async function postTransactions(transactions: Transaction[]): Promise<string[]> 
   let ids: string[] = [];
 
   for (let i = 0; i < transactions.length; i++) {
+    console.log("Post: " + i);
     try {
       await client.transactions.post(transactions[i]);
       ids.push(transactions[i].id);
@@ -185,3 +188,16 @@ async function postTransactions(transactions: Transaction[]): Promise<string[]> 
 
   return ids;
 }
+
+// Initialize & run the scheduler
+(async () => {
+  console.log("Generating block heights...");
+  const blockHeights = generateBlockHeights();
+  console.log("Generated block heights");
+  console.log(`Generating ${blockHeights.length} proposal transactions...`);
+  const transactions = await generateVoteProposals(blockHeights);
+  console.log("Generated proposal transactions");
+  console.log("Posting proposal transactions...");
+  let postedTransactions = await postTransactions(transactions);
+  console.log(`Successfully posted ${postedTransactions.length} transactions`);
+})();
