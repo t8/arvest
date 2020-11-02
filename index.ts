@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import Arweave from 'arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
+const cliProgress = require('cli-progress');
 require('dotenv').config();
 dayjs().format();
 
@@ -35,7 +36,7 @@ function totalVestingDays(): number {
  * @returns Total number of blocks in vesting period
  */
 function totalVestingBlocks(): number {
-  return totalVestingDays() * 24 * 60 / 2;
+  return totalVestingDays() * 60 / 2;
 }
 
 /**
@@ -92,9 +93,10 @@ async function generateVoteProposals(blockHeights: number[]): Promise<Transactio
   });
 
   let transactions: Transaction[] = [];
+  const prog = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+  prog.start(blockHeights.length - 1, 0);
 
   for (let i = 0; i < blockHeights.length; i++) {
-    console.log("Proposal: " + i);
     let tags = {
       "Application": "arVest",
       "Action": "Propose",
@@ -122,8 +124,10 @@ async function generateVoteProposals(blockHeights: number[]): Promise<Transactio
     }
 
     await client.transactions.sign(transactions[i], keyfile);
+    prog.update(i);
   }
 
+  prog.stop();
   return transactions;
 }
 
@@ -189,17 +193,20 @@ async function postTransactions(transactions: Transaction[]): Promise<string[]> 
     logging: false,
   });
   let ids: string[] = [];
+  const prog = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+  prog.start(transactions.length - 1, 0);
 
   for (let i = 0; i < transactions.length; i++) {
-    console.log("Post: " + i);
     try {
       await client.transactions.post(transactions[i]);
       ids.push(transactions[i].id);
+      prog.update(i);
     } catch (err) {
       console.error(err);
+      prog.stop();
     }
   }
-
+  prog.stop();
   return ids;
 }
 
@@ -207,10 +214,8 @@ async function postTransactions(transactions: Transaction[]): Promise<string[]> 
 (async () => {
   console.log("Generating block heights...");
   const blockHeights = generateBlockHeights();
-  console.log("Generated block heights");
   console.log(`Generating ${blockHeights.length} proposal transactions...`);
   const transactions = await generateVoteProposals(blockHeights);
-  console.log("Generated proposal transactions");
   console.log("Posting proposal transactions...");
   let postedTransactions = await postTransactions(transactions);
   console.log(`Successfully posted ${postedTransactions.length} transactions`);
