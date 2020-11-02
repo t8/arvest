@@ -10,6 +10,7 @@ export interface config {
   pst_contract_id: string;
   tokens_to_vest: number;
   vest_period: number;
+  vest_time_minimum: number;
   recipient: string;
 }
 
@@ -23,8 +24,9 @@ const keyfile: JWKInterface = JSON.parse(process.env.KEYFILE);
  */
 function totalVestingDays(): number {
   const now = dayjs();
-  const then = now.add(config.vest_period, "year");
-  return then.diff(now, "day");
+  const start = now.add(config.vest_time_minimum, "month");
+  const finish = now.add(config.vest_period, "month");
+  return finish.diff(start, "day");
 }
 
 /**
@@ -33,7 +35,19 @@ function totalVestingDays(): number {
  * @returns Total number of blocks in vesting period
  */
 function totalVestingBlocks(): number {
-  return totalVestingDays() * 30;
+  return totalVestingDays() * 24 * 60 / 2;
+}
+
+/**
+ * The total number of blocks that pass before tokens can be unlocked
+ * 
+ * @returns Total number of blocks in minimum time
+ */
+function initialVestingBlocks(): number {
+  const now = dayjs();
+  const start = now.add(config.vest_time_minimum, "month");
+  const days = start.diff(now, "day");
+  return days * 24 * 60 / 2;
 }
 
 /**
@@ -54,7 +68,7 @@ function generateBlockHeights(): number[] {
   let blockHeights = new Array(totalVestingBlocks() / 30);
   for (let i = 0; i < blockHeights.length; i++) {
     if (i === 0) {
-      blockHeights[i] = 0;
+      blockHeights[i] = initialVestingBlocks();
     } else {
       blockHeights[i] = blockHeights[i - 1] + 30;
     }

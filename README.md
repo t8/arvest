@@ -16,7 +16,8 @@
 | --- | --- | --- |
 | `pst_contract_id` | string | The contract ID of the profit-sharing community you're vesting tokens in |
 | `tokens_to_vest` | number | The number of tokens to vest |
-| `vest_period` | number | The amount of time (in **years**) that the tokens will be vested over |
+| `vest_period` | number | The amount of time (in **months**) that the tokens will be vested over |
+| `vest_time_minimum` | number | The minimum amount of time (in **months**) that tokens must be locked |
 | `recipient` | string | The wallet where the locked tokens will be received |
 
 ## Tag Specification
